@@ -34,8 +34,7 @@ pub fn compute_tau_powers<F: FftField>(tau: F, n: usize, path: Option<&str>) -> 
     #[cfg(feature = "serialize")]
     {
         let path = path.expect("Path not provided");
-        let g_affine = G::normalize_batch(&g_srs);
-        let data = serialize_points(&g_affine);
+        let data = serialize_points(&t_pows);
         write_points(path, &data);
         None
     }
