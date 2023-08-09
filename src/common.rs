@@ -3,6 +3,9 @@ use ark_ff::{Field, One};
 use ark_std::cfg_iter;
 use std::ops::Mul;
 
+#[cfg(feature = "parallel")]
+use rayon::iter::{IntoParallelRefIterator, IndexedParallelIterator, ParallelIterator};
+
 pub struct CommonPreprocessedInput<E: Pairing> {
     pub(crate) zv_2: E::G2Affine,
     pub(crate) t_2: E::G2Affine,

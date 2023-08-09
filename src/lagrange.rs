@@ -124,7 +124,7 @@ mod test_lagrange {
     use ark_ff::{batch_inversion, Field};
     use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
 
-    // cargo test --all --features=parallel -- --nocapture
+    // cargo test --features=parallel compute_lagrange_commitments
     #[test]
     fn compute_lagrange_commitments() {
         use ark_bn254::{Fr, G1Projective};
