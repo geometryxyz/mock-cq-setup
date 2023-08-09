@@ -52,16 +52,6 @@ pub fn lagrange_commitments<G: CurveGroup>(
     Some(G::normalize_batch(&g_lagrange_projective))
 }
 
-/*
-
-pub struct TableSRS<E: Engine> {
-    pub(crate) g1: Vec<E::G1Affine>,
-    pub(crate) g1_lagrange: Vec<E::G1Affine>,
-    pub(crate) g_lagrange_opening_at_0: Vec<E::G1Affine>,
-    pub(crate) g2: Vec<E::G2Affine>,
-}
-
-*/
 
 pub fn lagrange_commitments_at_zero<G: CurveGroup>(
     tau: G::ScalarField,

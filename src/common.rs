@@ -11,12 +11,13 @@ pub struct CommonPreprocessedInput<E: Pairing> {
 
 impl<E: Pairing> CommonPreprocessedInput<E> {
     fn compute(
-        tau: E::ScalarField,
+        powers_of_tau: &[E::ScalarField],
         table_coeffs: &[E::ScalarField],
         srs_g2_len: usize,
         srs_g1_len: usize,
         circuit_domain: usize,
     ) -> Self {
+        let tau = powers_of_tau[1];
         let g2 = E::G2::generator();
 
         // zv_2 = x^n - 1
@@ -24,11 +25,6 @@ impl<E: Pairing> CommonPreprocessedInput<E> {
         let zv = tau.pow(&[(srs_g2_len - 1) as u64]) - E::ScalarField::one();
         let zv_2: E::G2Affine = g2.mul(zv).into();
 
-        // TODO: compute powers of tau once and serialize that array
-        let powers_of_tau: Vec<E::ScalarField> =
-            std::iter::successors(Some(E::ScalarField::one()), |p| Some(*p * tau))
-                .take(srs_g1_len)
-                .collect();
         assert_eq!(powers_of_tau.len(), table_coeffs.len());
         let table_at_tau: E::ScalarField = table_coeffs
             .iter()
