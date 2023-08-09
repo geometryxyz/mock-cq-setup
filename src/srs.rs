@@ -72,7 +72,7 @@ mod powers_test {
         srs_g1
     }
 
-    // cargo test --all --features=parallel -- --nocapture
+    // cargo test --features=parallel test_srs
     #[test]
     fn test_srs() {
         use ark_bn254::{Bn254, Fr, G1Projective};

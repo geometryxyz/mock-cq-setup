@@ -8,7 +8,8 @@ pub fn compute_qs<E: Pairing>(
     t: &DensePolynomial<E::ScalarField>,
     domain: &GeneralEvaluationDomain<E::ScalarField>,
     tau_powers: &[E::ScalarField],
-) -> Vec<E::G1Affine> {
+    path: Option<&str>
+) -> Option<Vec<E::G1Affine>> {
     /*
         - N (table size) is always pow2
         - Toeplitz multiplication will happen in 2 * N, so appending zero commitments on hs is not needed
@@ -34,7 +35,17 @@ pub fn compute_qs<E: Pairing>(
         .map(|(&ki, normalizer_i)| gen.mul(ki * normalizer_i))
         .collect();
 
-    E::G1::normalize_batch(&qs_at_tau)
+    #[cfg(feature = "serialize")]
+    {
+        let path = path.expect("Path not provided");
+        let qs_affine = G::normalize_batch(&qs_at_tau);
+        let data = serialize_points(&qs_affine);
+        write_points(path, &data);
+        None
+    }
+
+    #[cfg(not(feature = "serialize"))]
+    Some(E::G1::normalize_batch(&qs_at_tau))
 }
 
 #[cfg(not(feature = "serialize"))]
@@ -47,7 +58,7 @@ mod powers_test {
     use ark_std::{test_rng, UniformRand};
     use std::ops::Mul;
 
-    // cargo test --features=parallel test_qs
+    // cargo test test_qs
     #[test]
     fn test_qs() {
         let k = 5;
@@ -82,7 +93,7 @@ mod powers_test {
             .take(n)
             .collect();
 
-        let qs = super::compute_qs::<Bn254>(&t_poly, &domain, &tau_powers);
-        assert_eq!(qs, q_commitments);
+        let qs = super::compute_qs::<Bn254>(&t_poly, &domain, &tau_powers, None);
+        assert_eq!(qs.unwrap(), q_commitments);
     }
 }
