@@ -1,5 +1,6 @@
 use ark_ec::{pairing::Pairing, Group};
 use ark_ff::{Field, One};
+use ark_std::cfg_iter;
 use std::ops::Mul;
 
 pub struct CommonPreprocessedInput<E: Pairing> {
@@ -21,14 +22,13 @@ impl<E: Pairing> CommonPreprocessedInput<E> {
         let g2 = E::G2::generator();
 
         // zv_2 = x^n - 1
-        // We always use the max power of g2
         let zv = tau.pow(&[(srs_g2_len - 1) as u64]) - E::ScalarField::one();
         let zv_2: E::G2Affine = g2.mul(zv).into();
 
         assert_eq!(powers_of_tau.len(), table_coeffs.len());
-        let table_at_tau: E::ScalarField = table_coeffs
-            .iter()
-            .zip(powers_of_tau.iter())
+        let table_at_tau: E::ScalarField = 
+            cfg_iter!(table_coeffs)
+            .zip(cfg_iter!(powers_of_tau))
             .map(|(&t_i, tau_pow_i)| t_i * tau_pow_i)
             .sum();
 
