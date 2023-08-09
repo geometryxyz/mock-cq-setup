@@ -21,6 +21,8 @@ impl<E: Pairing> CommonPreprocessedInput<E> {
         srs_g1_len: usize,
         circuit_domain: usize,
     ) -> Self {
+        assert_eq!(powers_of_tau.len(), table_coeffs.len());
+
         let tau = powers_of_tau[1];
         let g2 = E::G2::generator();
 
@@ -28,7 +30,6 @@ impl<E: Pairing> CommonPreprocessedInput<E> {
         let zv = tau.pow(&[(srs_g2_len - 1) as u64]) - E::ScalarField::one();
         let zv_2: E::G2Affine = g2.mul(zv).into();
 
-        assert_eq!(powers_of_tau.len(), table_coeffs.len());
         let table_at_tau: E::ScalarField = 
             cfg_iter!(table_coeffs)
             .zip(cfg_iter!(powers_of_tau))

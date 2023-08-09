@@ -182,15 +182,14 @@ mod test_lagrange {
         let l_at_zero = Fr::from(n as u64).inverse().unwrap();
         let x_poly = DensePolynomial::from_coefficients_slice(&[Fr::zero(), Fr::one()]);
 
-        let quotients: Vec<DensePolynomial<_>> = l_basis.iter().map(|li| {
+        let g = G1Projective::generator();
+        let q_commitments: Vec<G1Projective> = l_basis.iter().map(|li| {
             let mut li_x_minus_li_0 = li.clone();
             li_x_minus_li_0[0] -= l_at_zero;
 
-            &li_x_minus_li_0 /&x_poly
+            let qi = &li_x_minus_li_0 /&x_poly;
+            g.mul(qi.evaluate(&tau))
         }).collect();
-
-        let g = G1Projective::generator();
-        let q_commitments: Vec<G1Projective> = quotients.iter().map(|qi| g.mul(qi.evaluate(&tau))).collect();
 
         let lagrange_openings_commitments = super::lagrange_openings_commitments_at_zero::<G1Projective>(tau, n, None);
         assert_eq!(lagrange_openings_commitments.unwrap(), q_commitments);
