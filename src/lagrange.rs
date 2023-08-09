@@ -107,7 +107,7 @@ pub fn lagrange_commitments_at_zero<G: CurveGroup>(
         for (idx, g) in g.iter_mut().enumerate() {
             let offset = start + idx;
             let w_inv_pow_i = w.pow(&[(n - offset) as u64]);
-            *g = gen.mul(w_inv_pow_i * lagrange_at_tau[i] - li_at_zero * x_to_n_minus_one);
+            *g = gen.mul(w_inv_pow_i * lagrange_at_tau[idx] - li_at_zero * x_to_n_minus_one);
         }
     });
 

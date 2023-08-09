@@ -22,8 +22,9 @@ pub fn compute_tau_powers<F: FftField>(tau: F, n: usize, path: Option<&str>) -> 
     {
         use ark_ff::Field;
         use ark_ff::Zero;
+        t_pows.push(F::zero());
         parallelize(&mut t_pows, |tau_chunk, start| {
-            let mut current_tau: G = tau.pow(&[start as u64]);
+            let mut current_tau: F = tau.pow(&[start as u64]);
             for tau_i in tau_chunk.iter_mut() {
                 *tau_i = current_tau;
                 current_tau *= tau;
@@ -48,8 +49,9 @@ pub fn compute_tau_powers<F: FftField>(tau: F, n: usize, path: Option<&str>) -> 
 mod powers_test {
     use ark_ff::One;
 
+    // cargo test --features=parallel test_tau_pows
     #[test]
-    fn test_srs() {
+    fn test_tau_pows() {
         use ark_bn254::Fr;
         let k = 5;
         let tau = Fr::from(2 as u64);
