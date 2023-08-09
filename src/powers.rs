@@ -1,21 +1,18 @@
+use ark_ff::FftField;
 #[cfg(feature = "parallel")]
 use crate::utils::parallelize;
 #[cfg(feature = "serialize")]
 use crate::utils::{serialize_points, write_points};
-use ark_ec::CurveGroup;
 #[cfg(feature = "parallel")]
 use rayon::{self, prelude::*};
 
-pub fn compute_g_powers<G: CurveGroup>(
-    tau: G::ScalarField,
-    n: usize,
-    path: Option<&str>,
-) -> Option<Vec<G::Affine>> {
-    let mut g_srs = vec![G::zero(); n];
+
+pub fn compute_tau_powers<F: FftField>(tau: F, n: usize, path: Option<&str>) -> Option<Vec<F>> {
+    let mut t_pows = vec![F::zero(); n];
 
     #[cfg(not(feature = "parallel"))]
-    let g_srs: Vec<G> = std::iter::once(G::generator())
-        .chain(g_srs.iter().scan(G::generator(), |state, _| {
+    let t_pows: Vec<F> = std::iter::once(F::one())
+        .chain(t_pows.iter().scan(F::one(), |state, _| {
             *state *= &tau;
             Some(*state)
         }))
@@ -25,13 +22,11 @@ pub fn compute_g_powers<G: CurveGroup>(
     {
         use ark_ff::Field;
         use ark_ff::Zero;
-        g_srs.push(G::zero());
-        parallelize(&mut g_srs, |g, start| {
-            let mut current_g: G = G::generator();
-            current_g = current_g.mul(tau.pow(&[start as u64]));
-            for g in g.iter_mut() {
-                *g = current_g;
-                current_g *= tau;
+        parallelize(&mut t_pows, |tau_chunk, start| {
+            let mut current_tau: G = tau.pow(&[start as u64]);
+            for tau_i in tau_chunk.iter_mut() {
+                *tau_i = current_tau;
+                current_tau *= tau;
             }
         });
     }
@@ -46,43 +41,26 @@ pub fn compute_g_powers<G: CurveGroup>(
     }
 
     #[cfg(not(feature = "serialize"))]
-    Some(G::normalize_batch(&g_srs))
+    Some(t_pows)
 }
 
 #[cfg(not(feature = "serialize"))]
 #[cfg(test)]
 mod powers_test {
-    use ark_ec::{pairing::Pairing, AffineRepr};
     use ark_ff::One;
-    use std::ops::Mul;
 
-    fn sanity_srs<E: Pairing>(n: usize, tau: E::ScalarField) -> Vec<E::G1Affine> {
-        let powers_of_tau: Vec<E::ScalarField> =
-            std::iter::successors(Some(E::ScalarField::one()), |p| Some(*p * tau))
-                .take(n + 1)
-                .collect();
-
-        let g1_gen = E::G1Affine::generator();
-
-        let srs_g1: Vec<E::G1Affine> = powers_of_tau
-            .iter()
-            .map(|tp| g1_gen.mul(tp).into())
-            .collect();
-
-        srs_g1
-    }
-
-    // cargo test --all --features=parallel -- --nocapture
     #[test]
     fn test_srs() {
-        use ark_bn254::{Bn254, Fr, G1Projective};
-        let k = 1;
-        let n = 1 << k;
-        let tau = Fr::from(100 as u64);
+        use ark_bn254::Fr;
+        let k = 5;
+        let tau = Fr::from(2 as u64);
 
-        let srs_sanity = sanity_srs::<Bn254>(n, tau);
-        let g1_srs = super::compute_g_powers::<G1Projective>(tau, n, None).unwrap();
+        let tau_pows = super::compute_tau_powers::<Fr>(tau, k, None).unwrap();
+        let tau_successors: Vec<Fr> =
+        std::iter::successors(Some(Fr::one()), |p| Some(*p * tau))
+            .take(k + 1)
+            .collect();
 
-        assert_eq!(srs_sanity, g1_srs);
+        assert_eq!(tau_pows, tau_successors);
     }
 }

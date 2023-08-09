@@ -1,12 +1,13 @@
 mod common;
 mod fk;
 mod lagrange;
-mod powers;
+mod srs;
 mod quotients;
+mod powers;
 mod utils;
 
 pub use lagrange::lagrange_commitments;
-pub use powers::compute_g_powers;
+pub use srs::compute_g_powers;
 pub use utils::deserialize_points;
 
 // pub struct CommonPreprocessedInput<E: PairingEngine> {
@@ -37,7 +38,7 @@ pub struct StaticTableValues<E: MultiMillerLoop> {
 fn srs_roundtrip() {
     use ark_bn254::{Fr, G1Projective, G2Projective};
     use lagrange::lagrange_commitments;
-    use powers::compute_g_powers;
+    use srs::compute_g_powers;
 
     let k = 10;
     let n = 1 << k;
