@@ -1,6 +1,6 @@
-use std::fs::File;
 use ark_ec::AffineRepr;
 use ark_serialize::{CanonicalDeserialize, Read};
+use std::fs::File;
 
 #[cfg(feature = "parallel")]
 pub fn parallelize<T: Send, F: Fn(&mut [T], usize) + Send + Sync + Clone>(v: &mut [T], f: F) {
@@ -25,11 +25,10 @@ pub fn parallelize<T: Send, F: Fn(&mut [T], usize) + Send + Sync + Clone>(v: &mu
 #[cfg(feature = "serialize")]
 pub fn write_points(f_name: &str, data: &[u8]) {
     use std::io::Write;
-    
+
     let mut file = File::create(f_name).unwrap();
     file.write_all(&data).unwrap();
 }
-
 
 #[cfg(feature = "serialize")]
 use ark_serialize::CanonicalSerialize;
@@ -44,6 +43,6 @@ pub fn deserialize_points<G: AffineRepr>(path: &str) -> Vec<G> {
     let mut file = File::open(path).expect("File could not be opened.");
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
- 
+
     Vec::<G>::deserialize_compressed(buffer.as_slice()).unwrap()
 }
