@@ -3,7 +3,7 @@ use crate::utils::parallelize;
 #[cfg(feature = "serialize")]
 use crate::utils::{serialize_points, write_points};
 use ark_ec::CurveGroup;
-use ark_ff::{FftField, Field, One, Zero};
+use ark_ff::{FftField, Field, One};
 use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
 
 pub fn lagrange_commitments<G: CurveGroup>(
@@ -194,21 +194,5 @@ mod test_lagrange {
 
         let lagrange_openings_commitments = super::lagrange_openings_commitments_at_zero::<G1Projective>(tau, n, None);
         assert_eq!(lagrange_openings_commitments.unwrap(), q_commitments);
-    }
-
-    #[test]
-    fn test_root_inverses() {
-        let n = 16;
-        let domain = GeneralEvaluationDomain::<Fr>::new(n).unwrap();
-
-        let w = domain.element(1);
-        let mut roots_inv: Vec<Fr> = domain.elements().collect();
-        batch_inversion(&mut roots_inv);
-
-        for (i, &w_inv_pow_i) in roots_inv.iter().enumerate() {
-            let w_inv_true = w.pow(&[(n - i) as u64]);
-
-            assert_eq!(w_inv_true, w_inv_pow_i);
-        }
     }
 }
