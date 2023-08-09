@@ -70,7 +70,6 @@ fn read_table<F: FftField>(path: &str) -> DensePolynomial<F> {
 
 fn parse_args<F: FftField>() -> (u64, F, String) {
     let args: Vec<String> = env::args().collect();
-    assert_eq!(args.len(), 4);
 
     let to_u64 = |arg: &String| -> u64 {
         match arg.parse::<u64>() {
@@ -91,7 +90,7 @@ fn parse_args<F: FftField>() -> (u64, F, String) {
 }
 
 use ark_bn254::{Bn254, Fr};
-// cargo run --bin run_setup {k} {tau}
+// cargo run --bin run_setup {k} {tau} -- --features=parallel
 fn main() {
     let (n, tau, table_path) = parse_args::<Fr>();
     run::<Bn254>(n as usize, tau, table_path.as_str());
