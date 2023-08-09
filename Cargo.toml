@@ -3,6 +3,18 @@ name = "mock-cq-setup"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "mock_cq_setup"
+path = "src/lib.rs"
+
+[[bin]]
+name = "run_setup"
+path = "run_setup.rs"
+
+[[bin]]
+name = "serialize_table"
+path = "serialize_table.rs"
+
 [dependencies]
 ark-std = "0.4.0"
 ark-serialize = { version = "0.4", features = ["derive"] }
@@ -10,10 +22,8 @@ ark-ff = "0.4.0"
 ark-ec = "0.4.0"
 rayon = { version = "1.7", optional = true }
 ark-poly = "0.4.0"
-
-[dev-dependencies]
 ark-bn254 = "0.4.0"
+rand = "0.8.5"
 
 [features]
 parallel = ["rayon"]
-serialize = []

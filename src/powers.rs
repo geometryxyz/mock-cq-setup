@@ -1,14 +1,12 @@
-use ark_ff::FftField;
 #[cfg(feature = "parallel")]
 use crate::utils::parallelize;
-#[cfg(feature = "serialize")]
-use crate::utils::{serialize_points, write_points};
+use ark_ff::FftField;
 #[cfg(feature = "parallel")]
 use rayon::{self, prelude::*};
 
-
-pub fn compute_tau_powers<F: FftField>(tau: F, n: usize, path: Option<&str>) -> Option<Vec<F>> {
-    let mut t_pows = vec![F::zero(); n];
+/// [tau^0, ..., tau^{n-1}]
+pub fn compute_tau_powers<F: FftField>(tau: F, n: usize) -> Vec<F> {
+    let mut t_pows = vec![F::zero(); n - 1];
 
     #[cfg(not(feature = "parallel"))]
     let t_pows: Vec<F> = std::iter::once(F::one())
@@ -22,7 +20,6 @@ pub fn compute_tau_powers<F: FftField>(tau: F, n: usize, path: Option<&str>) -> 
     {
         use ark_ff::Field;
         use ark_ff::Zero;
-        t_pows.push(F::zero());
         parallelize(&mut t_pows, |tau_chunk, start| {
             let mut current_tau: F = tau.pow(&[start as u64]);
             for tau_i in tau_chunk.iter_mut() {
@@ -32,19 +29,9 @@ pub fn compute_tau_powers<F: FftField>(tau: F, n: usize, path: Option<&str>) -> 
         });
     }
 
-    #[cfg(feature = "serialize")]
-    {
-        let path = path.expect("Path not provided");
-        let data = serialize_points(&t_pows);
-        write_points(path, &data);
-        None
-    }
-
-    #[cfg(not(feature = "serialize"))]
-    Some(t_pows)
+    t_pows
 }
 
-#[cfg(not(feature = "serialize"))]
 #[cfg(test)]
 mod powers_test {
     use ark_ff::One;
@@ -53,13 +40,12 @@ mod powers_test {
     #[test]
     fn test_tau_pows() {
         use ark_bn254::Fr;
-        let k = 5;
+        let n = 5;
         let tau = Fr::from(2 as u64);
 
-        let tau_pows = super::compute_tau_powers::<Fr>(tau, k, None).unwrap();
-        let tau_successors: Vec<Fr> =
-        std::iter::successors(Some(Fr::one()), |p| Some(*p * tau))
-            .take(k + 1)
+        let tau_pows = super::compute_tau_powers::<Fr>(tau, n);
+        let tau_successors: Vec<Fr> = std::iter::successors(Some(Fr::one()), |p| Some(*p * tau))
+            .take(n)
             .collect();
 
         assert_eq!(tau_pows, tau_successors);

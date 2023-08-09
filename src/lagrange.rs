@@ -1,7 +1,5 @@
 #[cfg(feature = "parallel")]
 use crate::utils::parallelize;
-#[cfg(feature = "serialize")]
-use crate::utils::{serialize_points, write_points};
 use ark_ec::CurveGroup;
 use ark_ff::{FftField, Field, One};
 use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
@@ -9,8 +7,7 @@ use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
 pub fn lagrange_commitments<G: CurveGroup>(
     tau: G::ScalarField,
     n: u64,
-    path: Option<&str>,
-) -> Option<Vec<G::Affine>> {
+) -> Vec<G::Affine> {
     let mut g_lagrange_projective = vec![G::zero(); n as usize];
     let w = G::ScalarField::get_root_of_unity(n).unwrap();
 
@@ -39,29 +36,14 @@ pub fn lagrange_commitments<G: CurveGroup>(
         }
     });
 
-    #[cfg(feature = "serialize")]
-    {
-        let path = path.expect("Path not provided");
-        let lagrange_affine = G::normalize_batch(&g_lagrange_projective);
-        let data = serialize_points(&lagrange_affine);
-        write_points(path, &data);
-        None
-    }
-
-    #[cfg(not(feature = "serialize"))]
-    Some(G::normalize_batch(&g_lagrange_projective))
+    G::normalize_batch(&g_lagrange_projective)
 }
-
 
 pub fn lagrange_openings_commitments_at_zero<G: CurveGroup>(
     tau: G::ScalarField,
     n: usize,
-    path: Option<&str>,
-) -> Option<Vec<G::Affine>> {
-    fn is_pow_2(x: usize) -> bool {
-        (x & (x - 1)) == 0
-    }
-    assert!(is_pow_2(n));
+) -> Vec<G::Affine> {
+    assert!(crate::utils::is_pow_2(n));
 
     /*
                w^i * zh(X)
@@ -101,31 +83,25 @@ pub fn lagrange_openings_commitments_at_zero<G: CurveGroup>(
         }
     });
 
-    #[cfg(feature = "serialize")]
-    {
-        let path = path.expect("Path not provided");
-        let lagrange_openings_at_zero_affine = G::normalize_batch(&lagrange_openings_at_zero);
-        let data = serialize_points(&lagrange_openings_at_zero_affine);
-        write_points(path, &data);
-        None
-    }
-
-    #[cfg(not(feature = "serialize"))]
-    Some(G::normalize_batch(&lagrange_openings_at_zero))
+    G::normalize_batch(&lagrange_openings_at_zero)
 }
 
-#[cfg(not(feature = "serialize"))]
 #[cfg(test)]
 mod test_lagrange {
     use std::ops::Mul;
 
     use ark_bn254::{Fr, G1Affine, G1Projective};
     use ark_ec::{CurveGroup, Group};
-    use ark_ff::{batch_inversion, Field, FftField, Zero, One};
-    use ark_poly::{EvaluationDomain, GeneralEvaluationDomain, univariate::DensePolynomial, DenseUVPolynomial, Polynomial};
+    use ark_ff::{FftField, Field, One, Zero};
+    use ark_poly::{
+        univariate::DensePolynomial, DenseUVPolynomial, EvaluationDomain, GeneralEvaluationDomain,
+        Polynomial,
+    };
 
     // given x coords construct Li polynomials
-    pub fn construct_lagrange_basis<F: FftField>(evaluation_domain: &[F]) -> Vec<DensePolynomial<F>> {
+    pub fn construct_lagrange_basis<F: FftField>(
+        evaluation_domain: &[F],
+    ) -> Vec<DensePolynomial<F>> {
         let mut bases = Vec::with_capacity(evaluation_domain.len());
         for i in 0..evaluation_domain.len() {
             let mut l_i = DensePolynomial::from_coefficients_slice(&[F::one()]);
@@ -162,8 +138,8 @@ mod test_lagrange {
         let l_coms: Vec<G1Projective> = l_evals.iter().map(|li| g.mul(li)).collect();
         let l_coms: Vec<G1Affine> = G1Projective::normalize_batch(&l_coms);
 
-        let l_basis_coms = super::lagrange_commitments::<G1Projective>(tau, n as u64, None);
-        assert_eq!(l_basis_coms.unwrap(), l_coms);
+        let l_basis_coms = super::lagrange_commitments::<G1Projective>(tau, n as u64);
+        assert_eq!(l_basis_coms, l_coms);
     }
 
     // cargo test --features=parallel compute_lagrange_opening_commitments_at_zero
@@ -183,15 +159,19 @@ mod test_lagrange {
         let x_poly = DensePolynomial::from_coefficients_slice(&[Fr::zero(), Fr::one()]);
 
         let g = G1Projective::generator();
-        let q_commitments: Vec<G1Projective> = l_basis.iter().map(|li| {
-            let mut li_x_minus_li_0 = li.clone();
-            li_x_minus_li_0[0] -= l_at_zero;
+        let q_commitments: Vec<G1Projective> = l_basis
+            .iter()
+            .map(|li| {
+                let mut li_x_minus_li_0 = li.clone();
+                li_x_minus_li_0[0] -= l_at_zero;
 
-            let qi = &li_x_minus_li_0 /&x_poly;
-            g.mul(qi.evaluate(&tau))
-        }).collect();
+                let qi = &li_x_minus_li_0 / &x_poly;
+                g.mul(qi.evaluate(&tau))
+            })
+            .collect();
 
-        let lagrange_openings_commitments = super::lagrange_openings_commitments_at_zero::<G1Projective>(tau, n, None);
-        assert_eq!(lagrange_openings_commitments.unwrap(), q_commitments);
+        let lagrange_openings_commitments =
+            super::lagrange_openings_commitments_at_zero::<G1Projective>(tau, n);
+        assert_eq!(lagrange_openings_commitments, q_commitments);
     }
 }

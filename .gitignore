@@ -1,7 +1,4 @@
 /target
 /Cargo.lock
 .vscode
-
-srs_g1.bin
-srs_g2.bin
-lagrange.bin
+serialized/*

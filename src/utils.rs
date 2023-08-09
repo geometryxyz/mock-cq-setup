@@ -1,6 +1,23 @@
 use ark_ec::AffineRepr;
+use ark_ff::FftField;
 use ark_serialize::{CanonicalDeserialize, Read};
 use std::fs::File;
+use ark_std::log2;
+
+pub fn is_pow_2(x: usize) -> bool {
+    (x & (x - 1)) == 0
+}
+
+pub fn next_pow2(n: usize) -> usize {
+    let two: u32 = 2;
+    let a: u32 = log2(n);
+
+    if two.pow(a - 1) == n as u32 {
+        return n;
+    }
+
+    two.pow(a).try_into().unwrap()
+}
 
 #[cfg(feature = "parallel")]
 pub fn parallelize<T: Send, F: Fn(&mut [T], usize) + Send + Sync + Clone>(v: &mut [T], f: F) {
@@ -22,27 +39,25 @@ pub fn parallelize<T: Send, F: Fn(&mut [T], usize) + Send + Sync + Clone>(v: &mu
     });
 }
 
-#[cfg(feature = "serialize")]
-pub fn write_points(f_name: &str, data: &[u8]) {
+pub fn write_bytes(f_name: &str, data: &[u8]) {
     use std::io::Write;
 
     let mut file = File::create(f_name).unwrap();
     file.write_all(&data).unwrap();
 }
 
-#[cfg(feature = "serialize")]
 use ark_serialize::CanonicalSerialize;
-#[cfg(feature = "serialize")]
-pub fn serialize_points<G: AffineRepr>(x: &[G]) -> Vec<u8> {
+pub fn serialize_vec<T: CanonicalSerialize>(x: &[T]) -> Vec<u8> {
     let mut data = Vec::<u8>::new();
     x.serialize_compressed(&mut data).unwrap();
     data
 }
 
-pub fn deserialize_points<G: AffineRepr>(path: &str) -> Vec<G> {
+pub fn deserialize_vec<T: CanonicalDeserialize>(path: &str) -> Vec<T> {
     let mut file = File::open(path).expect("File could not be opened.");
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
 
-    Vec::<G>::deserialize_compressed(buffer.as_slice()).unwrap()
+    Vec::<T>::deserialize_compressed(buffer.as_slice()).unwrap()
 }
+
