@@ -1,8 +1,8 @@
-use ark_poly::DenseUVPolynomial;
-use ark_poly::{univariate::DensePolynomial, GeneralEvaluationDomain, EvaluationDomain};
 use ark_ff::FftField;
-use rand::SeedableRng;
+use ark_poly::DenseUVPolynomial;
+use ark_poly::{univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain};
 use rand::rngs::StdRng;
+use rand::SeedableRng;
 
 /// Generates random table from seed
 /// If seed is not provided, table is just simple sequence: [1..n]
@@ -21,10 +21,8 @@ pub fn gen_table<F: FftField>(k: usize, seed_string: Option<&str>) -> DensePolyn
             };
             let mut rng = StdRng::from_seed(seed);
             (0..n).map(|_| F::rand(&mut rng)).collect()
-        },
-        None => {
-            (0..n).map(|i| F::from((i + 1) as u64)).collect()
-        },
+        }
+        None => (0..n).map(|i| F::from((i + 1) as u64)).collect(),
     };
 
     DensePolynomial::<F>::from_coefficients_slice(&domain.ifft(&t_evals))

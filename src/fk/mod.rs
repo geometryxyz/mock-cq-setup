@@ -1,3 +1,4 @@
+use crate::utils::{is_pow_2, next_pow2};
 use ark_ff::FftField;
 use ark_poly::{
     domain::DomainCoeff, univariate::DensePolynomial, DenseUVPolynomial, EvaluationDomain,
@@ -5,7 +6,6 @@ use ark_poly::{
 };
 use ark_std::Zero;
 use std::{fmt::Debug, marker::PhantomData};
-use crate::utils::{is_pow_2, next_pow2};
 
 pub struct Circulant<F: FftField, D: DomainCoeff<F> + Debug> {
     _f: PhantomData<F>,

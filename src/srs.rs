@@ -5,10 +5,7 @@ use ark_ec::CurveGroup;
 use rayon::{self, prelude::*};
 
 /// [tau^0]G, ..., [tau^{n-1}]G
-pub fn compute_g_powers<G: CurveGroup>(
-    tau: G::ScalarField,
-    n: usize,
-) -> Vec<G::Affine> {
+pub fn compute_g_powers<G: CurveGroup>(tau: G::ScalarField, n: usize) -> Vec<G::Affine> {
     let mut g_srs = vec![G::zero(); n - 1];
 
     #[cfg(not(feature = "parallel"))]
@@ -23,6 +20,7 @@ pub fn compute_g_powers<G: CurveGroup>(
     {
         use ark_ff::Field;
         use ark_ff::Zero;
+        g_srs.push(G::zero());
         parallelize(&mut g_srs, |g, start| {
             let mut current_g: G = G::generator();
             current_g = current_g.mul(tau.pow(&[start as u64]));

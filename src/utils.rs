@@ -1,8 +1,8 @@
 use ark_ec::AffineRepr;
 use ark_ff::FftField;
 use ark_serialize::{CanonicalDeserialize, Read};
-use std::fs::File;
 use ark_std::log2;
+use std::fs::File;
 
 pub fn is_pow_2(x: usize) -> bool {
     (x & (x - 1)) == 0
@@ -60,4 +60,3 @@ pub fn deserialize_vec<T: CanonicalDeserialize>(path: &str) -> Vec<T> {
 
     Vec::<T>::deserialize_compressed(buffer.as_slice()).unwrap()
 }
-

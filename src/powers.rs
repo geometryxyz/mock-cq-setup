@@ -20,6 +20,7 @@ pub fn compute_tau_powers<F: FftField>(tau: F, n: usize) -> Vec<F> {
     {
         use ark_ff::Field;
         use ark_ff::Zero;
+        t_pows.push(F::one());
         parallelize(&mut t_pows, |tau_chunk, start| {
             let mut current_tau: F = tau.pow(&[start as u64]);
             for tau_i in tau_chunk.iter_mut() {

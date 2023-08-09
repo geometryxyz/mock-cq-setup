@@ -1,6 +1,6 @@
-use std::env;
 use ark_bn254::Fr;
 use mock_cq_setup::{gen_table, serialize_vec, write_bytes};
+use std::env;
 
 // cargo run --bin serialize_table {k} {seed} {path}
 fn main() {

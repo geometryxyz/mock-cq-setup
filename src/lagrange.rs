@@ -4,10 +4,7 @@ use ark_ec::CurveGroup;
 use ark_ff::{FftField, Field, One};
 use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
 
-pub fn lagrange_commitments<G: CurveGroup>(
-    tau: G::ScalarField,
-    n: u64,
-) -> Vec<G::Affine> {
+pub fn lagrange_commitments<G: CurveGroup>(tau: G::ScalarField, n: u64) -> Vec<G::Affine> {
     let mut g_lagrange_projective = vec![G::zero(); n as usize];
     let w = G::ScalarField::get_root_of_unity(n).unwrap();
 
